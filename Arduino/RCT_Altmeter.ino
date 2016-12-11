@@ -7,7 +7,7 @@
 
   -----------------------------------------------------------
 
-    Simple altirude sensor for Jeti EX telemetry with cheap
+    Simple altitude sensor for Jeti EX telemetry with cheap
     BMP180 breakout-board and Arduino Pro Mini
 
   -----------------------------------------------------------
