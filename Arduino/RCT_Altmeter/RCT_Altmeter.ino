@@ -1,6 +1,6 @@
 /*
    -----------------------------------------------------------
-                Jeti Altitude Sensor v 1.0
+                Jeti Altitude Sensor v 1.1
    -----------------------------------------------------------
 
     Tero Salminen RC-Thoughts.com (c) 2016 www.rc-thoughts.com
@@ -39,8 +39,12 @@ Adafruit_BMP085 bmp;
 #define ITEMTYPE_1 F("m")
 #define ITEMVAL_1 &uAltitude
 
+#define ITEMNAME_2 F("Temperature")
+#define ITEMTYPE_2 F("\xB0\x43")
+#define ITEMVAL_2 &uTemperature
+
 #define ABOUT_1 F(" RCT Jeti Tools")
-#define ABOUT_2 F("  Altitude")
+#define ABOUT_2 F(" Jeti AltMeter")
 
 SoftwareSerial JetiSerial(JETI_RX, JETI_TX);
 
@@ -153,6 +157,13 @@ unsigned char SendFrame()
   }
 }
 
+unsigned char DisplayFrame()
+{
+  for (int i = 0 ; i < JB.frameSize ; i++ )
+  {
+  }
+}
+
 uint8_t frame[10];
 short value = 27;
 
@@ -161,13 +172,14 @@ int curPressure = 0;
 int curAltitude = 0;
 int uLoopCount = 0;
 int uAltitude = 0;
+int uTemperature = 0;
 
 const int numReadings = 6;
 int readings[numReadings];
 int readIndex = 0;
 int total = 0;
 
-#define MAX_SCREEN 1
+#define MAX_SCREEN 3
 #define MAX_CONFIG 1
 #define COND_LES_EQUAL 1
 #define COND_MORE_EQUAL 2
@@ -185,7 +197,9 @@ void setup()
   JB.JetiBox(ABOUT_1, ABOUT_2);
   JB.Init(F("RCT"));
   JB.addData(ITEMNAME_1, ITEMTYPE_1);
+  JB.addData(ITEMNAME_2, ITEMTYPE_2);
   JB.setValue(1, ITEMVAL_1);
+  JB.setValue(2, ITEMVAL_2);
 
   bmp.begin();
   for (int thisReading = 0; thisReading < numReadings; thisReading++) {
@@ -201,20 +215,53 @@ void setup()
   digitalWrite(13, LOW);
 }
 
-int header = 0;
-int lastbtn = 240;
-int current_screen = 1;
-int current_config = 0;
-
 float alarm_current = 0;
 
+int header = 0;
+int lastbtn = 240;
+int current_screen = 0;
+int current_config = 0;
 char temp[LCDMaxPos / 2];
 char msg_line1[LCDMaxPos / 2];
 char msg_line2[LCDMaxPos / 2];
 
+void process_screens()  
+{
+  switch (current_screen)
+  {
+  case 0 : {
+        JB.JetiBox(ABOUT_1, ABOUT_2);
+        break;
+      }
+  case 1 : {
+        msg_line1[0] = 0; msg_line2[0] = 0;
+
+        strcat_P((char*)&msg_line1, (prog_char*)F("Altitude: "));
+        temp[0] = 0;
+        floatToString((char*)&temp, uAltitude, 0);
+        strcat((char*)&msg_line1, (char*)&temp);        
+        strcat_P((char*)&msg_line1, (prog_char*)F("m"));
+
+        strcat_P((char*)&msg_line2, (prog_char*)F("Temp.: "));
+        temp[0] = 0;
+        floatToString((char*)&temp, uTemperature, 0);
+        strcat((char*)&msg_line2, (char*)&temp);
+        strcat_P((char*)&msg_line2, (prog_char*)F("\xB0\x43"));
+
+        JB.JetiBox((char*)&msg_line1, (char*)&msg_line2);
+        break;
+      }
+  case MAX_SCREEN : {
+        JB.JetiBox(ABOUT_1, ABOUT_2);
+        break;
+      }
+  }
+}
+
 void loop()
 { 
   curAltitude = bmp.readAltitude();
+  uTemperature = bmp.readTemperature();
 
   if (uLoopCount == 20) {
     startAltitude = curAltitude;
@@ -235,10 +282,15 @@ void loop()
     uAltitude = 0;
   }
 
-  //Serial.print("Altitude = "); // Uncomment these for PC debug
-  //Serial.print(uAltitude);
-  //Serial.println(" meters");
-  //Serial.println();
+  /*Serial.print("Altitude = "); // Uncomment these for PC debug
+  Serial.print(uAltitude);
+  Serial.println(" meters");
+  Serial.println();
+
+  Serial.print("Temperature = "); // Uncomment these for PC debug
+  Serial.print(uTemperature);
+  Serial.println("*C");
+  Serial.println();*/ 
 
   unsigned long time = millis();
   SendFrame();
@@ -265,14 +317,29 @@ void loop()
       lastbtn = read;
       switch (read)
       {
-        case 224 :
+        case 224 : // RIGHT
+          if (current_screen != MAX_SCREEN)
+          {
+            current_screen++;
+            if (current_screen == 2) current_screen = 0;
+          }
           break;
-        case 112 :
+        case 112 : // LEFT
+          if (current_screen != MAX_SCREEN)
+          if (current_screen == 2) current_screen = 1;
+          else
+          {
+            current_screen--;
+            if (current_screen > MAX_SCREEN) current_screen = 0;
+          }
           break;
-        case 208 :
-
+        case 208 : // UP
           break;
-        case 176 :
+        case 176 : // DOWN
+          break;
+        case 144 : // UP+DOWN
+          break;
+        case 96 : // LEFT+RIGHT
           break;
       }
     }
@@ -280,12 +347,12 @@ void loop()
 
   if (current_screen != MAX_SCREEN)
     current_config = 0;
+  process_screens();
   header++;
   if (header >= 5)
   {
     JB.createFrame(1);
     header = 0;
-
   }
   else
   {
