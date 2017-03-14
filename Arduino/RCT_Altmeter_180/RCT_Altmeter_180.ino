@@ -8,7 +8,7 @@
   -----------------------------------------------------------
 
     Simple altitude sensor for Jeti EX telemetry with cheap
-    BMP180 breakout-board and Arduino Pro Mini
+    BMP085 or BMP180 breakout-board and Arduino Pro Mini
 
   -----------------------------------------------------------
     Shared under MIT-license by Tero Salminen (c) 2016
