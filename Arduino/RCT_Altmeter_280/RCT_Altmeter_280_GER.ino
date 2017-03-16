@@ -35,7 +35,7 @@ Adafruit_BMP280 bmp;
 #define JETI_TX 4
 #endif
 
-#define ITEMNAME_1 F("Höhe")
+#define ITEMNAME_1 F("Hoehe")
 #define ITEMTYPE_1 F("m")
 #define ITEMVAL_1 &uAltitude
 
@@ -236,7 +236,7 @@ void process_screens()
   case 1 : {
         msg_line1[0] = 0; msg_line2[0] = 0;
 
-        strcat_P((char*)&msg_line1, (prog_char*)F("Altitude: "));
+        strcat_P((char*)&msg_line1, (prog_char*)F("Hoehe: "));
         temp[0] = 0;
         floatToString((char*)&temp, uAltitude, 0);
         strcat((char*)&msg_line1, (char*)&temp);        
