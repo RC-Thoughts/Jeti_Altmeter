@@ -3,7 +3,7 @@
                 Jeti Altitude Sensor v 1.2
    -----------------------------------------------------------
 
-    Tero Salminen RC-Thoughts.com (c) 2016 www.rc-thoughts.com
+    Tero Salminen RC-Thoughts.com (c) 2017 www.rc-thoughts.com
 
   -----------------------------------------------------------
 
@@ -11,7 +11,7 @@
     BMP085 or BMP180 breakout-board and Arduino Pro Mini
 
   -----------------------------------------------------------
-    Shared under MIT-license by Tero Salminen (c) 2016
+    Shared under MIT-license by Tero Salminen (c) 2017
   -----------------------------------------------------------
 */
 
