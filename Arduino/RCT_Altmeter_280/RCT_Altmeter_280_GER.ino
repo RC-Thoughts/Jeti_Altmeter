@@ -1,9 +1,9 @@
 /*
    -----------------------------------------------------------
-                Jeti Altitude Sensor v 1.1
+                Jeti Altitude Sensor v 1.2
    -----------------------------------------------------------
 
-    Tero Salminen RC-Thoughts.com (c) 2016 www.rc-thoughts.com
+    Tero Salminen RC-Thoughts.com (c) 2017 www.rc-thoughts.com
 
   -----------------------------------------------------------
 
@@ -11,7 +11,7 @@
     BMP280 breakout-board and Arduino Pro Mini
 
   -----------------------------------------------------------
-    Shared under MIT-license by Tero Salminen (c) 2016
+    Shared under MIT-license by Tero Salminen (c) 2017
   -----------------------------------------------------------
 */
 
@@ -179,7 +179,7 @@ int readings[numReadings];
 int readIndex = 0;
 int total = 0;
 
-#define MAX_SCREEN 3
+#define MAX_SCREEN 4
 #define MAX_CONFIG 1
 #define COND_LES_EQUAL 1
 #define COND_MORE_EQUAL 2
@@ -248,6 +248,20 @@ void process_screens()
         strcat((char*)&msg_line2, (char*)&temp);
         strcat_P((char*)&msg_line2, (prog_char*)F("\xB0\x43"));
 
+        JB.JetiBox((char*)&msg_line1, (char*)&msg_line2);
+        break;
+      }
+  case 2 : {
+        msg_line1[0] = 0; msg_line2[0] = 0;
+        strcat_P((char*)&msg_line1, (prog_char*)F("Hoehe Reset"));
+        strcat_P((char*)&msg_line2, (prog_char*)F("Niederdrucken!"));
+        JB.JetiBox((char*)&msg_line1, (char*)&msg_line2);
+        break;
+      }
+  case 99 : {
+        msg_line1[0] = 0; msg_line2[0] = 0;
+        strcat_P((char*)&msg_line1, (prog_char*)F("Hoehe reset!"));
+        strcat_P((char*)&msg_line2, (prog_char*)F("Verlassen <"));
         JB.JetiBox((char*)&msg_line1, (char*)&msg_line2);
         break;
       }
@@ -321,21 +335,25 @@ void loop()
           if (current_screen != MAX_SCREEN)
           {
             current_screen++;
-            if (current_screen == 2) current_screen = 0;
+            if (current_screen == 3) current_screen = 0;
           }
           break;
         case 112 : // LEFT
           if (current_screen != MAX_SCREEN)
-          if (current_screen == 2) current_screen = 1;
-          else
-          {
-            current_screen--;
-            if (current_screen > MAX_SCREEN) current_screen = 0;
-          }
+            if (current_screen == 99) current_screen = 1;
+            else
+            {
+              current_screen--;
+              if (current_screen > MAX_SCREEN) current_screen = 0;
+              }
           break;
         case 208 : // UP
           break;
         case 176 : // DOWN
+          if (current_screen == 2) {
+            startAltitude = curAltitude;
+            current_screen = 99;
+          }
           break;
         case 144 : // UP+DOWN
           break;
