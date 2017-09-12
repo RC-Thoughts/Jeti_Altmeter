@@ -1,6 +1,6 @@
 /*
    -----------------------------------------------------------
-                Jeti Altitude Sensor v 1.2
+                Jeti Altitude Sensor v 1.3
    -----------------------------------------------------------
 
     Tero Salminen RC-Thoughts.com (c) 2017 www.rc-thoughts.com
@@ -9,6 +9,8 @@
 
     Simple altitude sensor for Jeti EX telemetry with cheap
     BMP085 or BMP180 breakout-board and Arduino Pro Mini
+    
+    Thanks for "Max" to Rainer Nottbusch!
 
   -----------------------------------------------------------
     Shared under MIT-license by Tero Salminen (c) 2017
@@ -173,13 +175,15 @@ int curAltitude = 0;
 int uLoopCount = 0;
 int uAltitude = 0;
 int uTemperature = 0;
+int uMaxAltitude = 0;
+int uMaxTemperature = 0;
 
 const int numReadings = 6;
 int readings[numReadings];
 int readIndex = 0;
 int total = 0;
 
-#define MAX_SCREEN 4
+#define MAX_SCREEN 5
 #define MAX_CONFIG 1
 #define COND_LES_EQUAL 1
 #define COND_MORE_EQUAL 2
@@ -253,7 +257,25 @@ void process_screens()
       }
   case 2 : {
         msg_line1[0] = 0; msg_line2[0] = 0;
-        strcat_P((char*)&msg_line1, (prog_char*)F("Altitude Reset"));
+
+        strcat_P((char*)&msg_line1, (prog_char*)F("MaxAlt.: "));
+        temp[0] = 0;
+        floatToString((char*)&temp, uMaxAltitude, 0);
+        strcat((char*)&msg_line1, (char*)&temp);        
+        strcat_P((char*)&msg_line1, (prog_char*)F("m"));
+
+        strcat_P((char*)&msg_line2, (prog_char*)F("MaxTemp.: "));
+        temp[0] = 0;
+        floatToString((char*)&temp, uMaxTemperature, 0);
+        strcat((char*)&msg_line2, (char*)&temp);
+        strcat_P((char*)&msg_line2, (prog_char*)F("\xB0\x43"));
+
+        JB.JetiBox((char*)&msg_line1, (char*)&msg_line2);
+        break;
+      }
+  case 3 : {
+        msg_line1[0] = 0; msg_line2[0] = 0;
+        strcat_P((char*)&msg_line1, (prog_char*)F("Alt & Max Reset"));
         strcat_P((char*)&msg_line2, (prog_char*)F("Press DOWN"));
         JB.JetiBox((char*)&msg_line1, (char*)&msg_line2);
         break;
@@ -276,6 +298,10 @@ void loop()
 { 
   curAltitude = bmp.readAltitude();
   uTemperature = bmp.readTemperature();
+  
+  if (uTemperature > uMaxTemperature) {
+    uMaxTemperature = uTemperature;
+  }
 
   if (uLoopCount == 20) {
     startAltitude = curAltitude;
@@ -294,6 +320,10 @@ void loop()
   if (uLoopCount < 21) {
     uLoopCount++;
     uAltitude = 0;
+  }
+  
+  if (uAltitude > uMaxAltitude and uLoopCount > 20) {
+    uMaxAltitude = uAltitude;
   }
 
   /*Serial.print("Altitude = "); // Uncomment these for PC debug
@@ -335,7 +365,7 @@ void loop()
           if (current_screen != MAX_SCREEN)
           {
             current_screen++;
-            if (current_screen == 3) current_screen = 0;
+            if (current_screen == 4) current_screen = 0;
           }
           break;
         case 112 : // LEFT
@@ -350,8 +380,10 @@ void loop()
         case 208 : // UP
           break;
         case 176 : // DOWN
-          if (current_screen == 2) {
+          if (current_screen == 3) {
             startAltitude = curAltitude;
+            uMaxAltitude = 0;
+            uMaxTemperature = 0; 
             current_screen = 99;
           }
           break;
